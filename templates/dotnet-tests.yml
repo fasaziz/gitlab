@@ -1,0 +1,16 @@
+test:
+  stage: test
+  image: mcr.microsoft.com/dotnet/sdk:6.0
+  before_script:
+    - echo ${CI_PROJECT_DIR}/${SLN_FILE}
+  script: 
+    - |
+      dotnet restore "${CI_PROJECT_DIR}/${SLN_FILE}" --source https://api.nuget.org/v3/index.json --source https://packages.capitalontap.com/v3/index.json
+      dotnet tool restore
+      for file in ${CI_PROJECT_DIR}/**/*.Integration.Tests.csproj
+      do
+        echo $file
+        dotnet test $file ${DOTNET_TEST_ARGS}
+      done
+      #dotnet test ${CI_PROJECT_DIR}/Api.Unit.Tests/Api.Unit.Tests.csproj ${DOTNET_TEST_ARGS}
+
