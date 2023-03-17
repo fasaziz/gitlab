@@ -1,0 +1,29 @@
+variables:
+  DOCKER_HOST: tcp://docker:2376
+  DOCKER_TLS_CERTDIR: "/certs"
+  DOCKER_TLS_VERIFY: 1
+  DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+  AZURE_CLIENT_ID: ${AZURE_CLIENT_ID}
+  AZURE_TENANT_ID: ${AZURE_TENANT_ID}
+  AZURE_CLIENT_SECRET: ${AZURE_CLIENT_SECRET}
+
+test:
+  stage: test
+  image: docker:20.10.16
+  services:
+      - docker:20.10.16-dind
+  before_script:
+      - until docker info; do sleep 1; done
+      - echo $DOCKER_HOST
+      - echo $DOCKER_CERT_PATH
+      - echo DOCKER_TLS_CERTDIR
+      - echo $APPLICATION
+      - echo "${CI_PROJECT_DIR}/docker-compose.tests.yml"
+  script:
+    - export AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
+    - export AZURE_TENANT_ID=${AZURE_TENANT_ID}
+    - export AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}
+    - echo $AZURE_TENANT_ID
+    - docker version
+    - docker compose version
+    - docker compose -f ${CI_PROJECT_DIR}/docker-compose.tests.yml up $APPLICATION --exit-code-from $APPLICATION
