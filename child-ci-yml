@@ -1,0 +1,80 @@
+# docker-test-api:
+#   stage: test
+#   trigger:
+#     include:
+#       - project: CapitalOnTapPOC/gitlab-templates
+#         file: 'docker-compose-tests.yml'
+#     strategy: depend
+#   variables:
+#     APPLICATION: api-integration
+
+# dotnet-test-api:
+#   stage: test
+#   trigger:
+#     include:
+#       - project: CapitalOnTapPOC/gitlab-templates
+#         file: 'dotnet-tests.yml'
+#   variables:
+#     SLN_FILE: Containerisation.PoC.sln
+#     DOTNET_TEST_ARGS: /p:GenerateNSwag=false
+
+# build-api: # this job uses a template pssing in variables
+#   stage: build
+#   trigger:
+#     include:
+#       - project: CapitalOnTapPOC/gitlab-templates
+#         file: 'dockerbuildpush.yml'
+#     strategy: depend
+#   # rules:
+#   #   - if: $CI_COMMIT_MESSAGE =~ /skip build/ # dont want to always build when testing
+#   #     when: manual
+#   variables:
+#     DOCKER_FILE_PATH: "/docker/Api.Dockerfile"
+#     CONTEXT: ""
+#     PROJECT_NAME: "gitlabpoc-api"
+
+deploy-api:
+  stage: deploy
+  image:
+    name: bitnami/kubectl:latest
+    entrypoint: [""]
+  before_script:
+  - echo $KUBE_CONTEXT
+  - if [ -n "$KUBE_CONTEXT" ]; then kubectl config use-context "$KUBE_CONTEXT"; fi
+  script:
+  - sleep 1m
+  - ls
+  # - kubectl config use-context capitalontappoc/KubernetesAgents:sharedaks
+  # - kubectl get nodes
+  # - kubectl apply -f $CI_PROJECT_DIR/sampleapps/. # Directory where yamls are placed in repo
+  # needs:
+  #   - build-api
+  variables:
+    KUBE_CONTEXT: capitalontappoc/kubernetesagents:sharedaks
+    CI_DEBUG_TRACE: "true"
+
+
+
+#--------- GitLab Agent CI/CD Tunnel configuration
+# Set KUBE_CONTEXT to use with the GitLab Kubernetes Agent's CI/CD tunnel. See
+# https://docs.gitlab.com/ee/user/clusters/agent/ci_cd_tunnel.html.
+#-----------------------------------
+# This will get access of your K8s cluster from GitLab Agent using its service account.
+# variables:
+#   # KUBE_CONTEXT: usernameorgroupname/agentconfigprojectname:agentname
+# KUBE_CONTEXT: capitalontappoc/kubernetesagents:shared-aks
+# # Set K8s context of GitLab Agent
+# .kube-context:
+#   before_script:
+#   - if [ -n "$KUBE_CONTEXT" ]; then kubectl config use-context "$KUBE_CONTEXT"; fi
+# # Deploy application on K8s cluster using kubectl
+# deploy:
+#   extends: [.kube-context]
+# image:
+#     name: bitnami/kubectl:latest
+#     entrypoint: [""]
+#   script:
+#   - ls
+#   - kubectl get nodes
+#   # - kubectl apply -f $CI_PROJECT_DIR/sampleapps/. # Directory where yamls are placed in repo
+#   - kubectl get pods -n sampleapp
