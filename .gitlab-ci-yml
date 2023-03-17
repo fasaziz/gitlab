@@ -1,0 +1,27 @@
+# stages:
+#   - test
+#   - build
+
+# Api_test:
+#   stage: test
+#   trigger:
+#     include: Api/.gitlab-ci.yml
+
+# Api_build:
+#   stage: build
+#   trigger:
+#     include: Api/.gitlab-ci.yml
+
+# AutomatedPaymentsJobs:
+#   stage: build
+#   trigger:
+#     include: AutomatedPayments.Jobs/.gitlab-ci.yml
+
+
+stages:
+  - test
+  - build
+  - deploy
+
+include:
+  - 'Api/.gitlab-ci.yml'
