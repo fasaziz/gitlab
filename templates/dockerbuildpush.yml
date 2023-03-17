@@ -1,0 +1,49 @@
+# services:
+#   - name: docker:dind
+#     entrypoint: ["env", "-u", "DOCKER_HOST"]
+#     command: ["dockerd-entrypoint.sh"]
+
+variables:
+  DOCKER_FILE_PATH: "/src/Dockerfile"
+  ACR_NAME: 'capitalontap.azurecr.io'
+  CONTEXT: "/src"
+
+build:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:v1.9.0-debug
+    entrypoint: [""]
+  before_script:
+     - echo $DOCKER_FILE_PATH
+     - echo $CI_REGISTRY_USER
+     - echo $ACR_NAME
+     - echo "$CI_REGISTRY_PASSWORD"
+     - echo $CI_BUILDS_DIR
+     - echo $CI_PROJECT_DIR
+     - echo $CONTEXT
+     - echo "$ACR_NAME/$PROJECT_NAME:$CI_COMMIT_SHORT_SHA"
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$ACR_NAME\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}/${CONTEXT}"
+      --dockerfile "${CI_PROJECT_DIR}/${DOCKER_FILE_PATH}"
+      --destination "$ACR_NAME/$PROJECT_NAME:$CI_COMMIT_SHORT_SHA"
+
+# build:
+#   stage: build
+#   image: docker:19.03.12
+#   services:
+#     - docker:19.03.12-dind
+#   before_script:
+#     - echo $DOCKER_FILE
+#     - echo $CI_REGISTRY_USER
+#     - echo $ACR_NAME
+#     - echo "$CI_REGISTRY_PASSWORD"
+#     - echo $CI_BUILDS_DIR
+#     - echo $CI_PROJECT_DIR
+#     - until docker info; do sleep 1; done
+#     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $ACR_NAME
+#   script:
+#     - docker build -t "$CI_PROJECT_NAME:$CI_COMMIT_SHORT_SHA" $CI_PROJECT_DIR/src
+#     - docker push $ACR_NAME/$CI_PROJECT_NAME:$CI_COMMIT_SHORT_SHA
